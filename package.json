@@ -7,7 +7,8 @@
     "email": "daan@daan.vodka"
   },
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "vite build"
   },
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.41",
