@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'Cozette';
+    src: url('/fonts/CozetteVector.otf');
+}
+
+* { margin: 0; }
+html, body { height: 100%; }
+body { background-color: black; color: white; font-family: 'Cozette'; font-size: 12px; }
+
+.markdown > p { padding: .5rem .75rem; }
+.markdown > h1 { font-size: 12px; font-weight: normal; }
+.markdown > h1::before { content: '# '; }

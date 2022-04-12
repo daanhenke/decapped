@@ -1,0 +1,18 @@
+{
+  "name": "decapped",
+  "version": "1.0.0",
+  "license": "WTFPL",
+  "author": {
+    "name": "Daan Henke",
+    "email": "daan@daan.vodka"
+  },
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.41",
+    "svelte": "^3.47.0",
+    "vite": "^2.9.1",
+    "vite-plugin-markdown": "^2.0.2"
+  }
+}
