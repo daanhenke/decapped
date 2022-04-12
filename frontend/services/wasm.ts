@@ -95,12 +95,45 @@ function __log_string(ptr: number)
     log_string(`runtime: ${string_at(ptr)}`)
 }
 
+function __log_hex(number: number, prefix: number)
+{
+    if (prefix !== 0)
+    {
+        __log_string(prefix)
+        log_string("");
+    }
+    log_string(`${number.toString(16)}\n`)
+}
+
+interface allocator_info
+{
+    pages_max: number
+    pages_used: number
+}
+
+export function get_allocator_info(): allocator_info
+{
+    const base = ctx.runtime_instance.exports.malloc_get_dynamic_base()
+    const view = new DataView(bytes_at(base, 0x8))
+
+    return {
+        pages_max: view.getUint32(0x0, true),
+        pages_used: view.getUint32(0x4, true)
+    }
+}
+
+export function get_wasm_context(): wasm_context
+{
+    return ctx
+}
+
 export async function init_runtime()
 {
-    const module = await load_wasm_module('/wasm/runtime.wasm')
+    const module = await load_wasm_module('wasm/runtime.wasm')
     console.log(module)
 
     ctx.runtime_imports.log_string = __log_string
+    ctx.runtime_imports.log_hex = __log_hex
     const imports = ctx.runtime_imports
 
     ctx.memory = new WebAssembly.Memory({ initial: 10, maximum: 10, shared: true })
@@ -115,6 +148,6 @@ export async function init_runtime()
     log_string('calling runtime_init\n')
     const result = ctx.runtime_instance.exports.runtime_init()
     const malloc_base = ctx.runtime_instance.exports.malloc_get_dynamic_base();
-    console.log(bytes_at(malloc_base, 4))
+    log_string(`malloc start: ${malloc_base.toString(16)}\n`)
     log_string(`runtime_init finished, result: 0x${result.toString(16)}\n`)
 }
