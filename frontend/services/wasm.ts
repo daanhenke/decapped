@@ -180,4 +180,6 @@ export async function init_runtime()
 log_string('calling interpreter_init\n')
     const interpreter_result = ctx.interpreter.exports.interpreter_init()
     log_string(`interpreter_init finished, result: 0x${interpreter_result.toString(16)}\n`)
+
+    window.ctx = ctx
 }

@@ -17,6 +17,7 @@ typedef union
         uint32_t p0: 2;
     };
     uint32_t full;
-} address_translation_t __attribute__((packed));
+} address_translation_t;
 
 bool guest_memory_init();
+uintptr_t guest_memory_translate(uintptr_t address);

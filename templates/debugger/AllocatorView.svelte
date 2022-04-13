@@ -47,7 +47,6 @@
                 const at = allocation_list.hasOwnProperty(base) ? allocation_list[base].at : Math.floor(new Date().getTime() / 1000);
                 const size = size_view.getUint32(i * 4, true)
                 const type = type_view.getUint8(i);
-                console.log(type, type_view, size_view, i, allocator_info.type_base);
                 result[base] = { at, size, type }
                 i += size > 0 ? size : 1;
             }

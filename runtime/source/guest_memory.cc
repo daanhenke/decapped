@@ -55,6 +55,11 @@ uintptr_t guest_memory_translate(uintptr_t address)
     return p2->dest + trans.offset;
 }
 
+export_func uintptr_t __imp_guest_memory_translate(uintptr_t address)
+{
+    return guest_memory_translate(address);
+}
+
 bool guest_memory_init()
 {
     log_string("initializing guest memory...\n");
@@ -64,11 +69,5 @@ bool guest_memory_init()
         pt_root[i].dest = 0;
     }
 
-    auto test1 = guest_memory_translate(0x11223344);
-    auto test3 = guest_memory_translate(0x91223344);
-    for (auto i = 0; i < 10; i++)
-    {
-        guest_memory_translate(0x00330000 + i * 0x1000);
-    }
     return true;
 }

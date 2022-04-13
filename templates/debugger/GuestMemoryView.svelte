@@ -9,7 +9,7 @@
         p2: []
     }
 
-    let tables_draft = tables;
+    let tables_draft;
     const table_keys = [ 'p0', 'p1', 'p2' ]
     const pte_size = 4;
     const read_pt = (base, size, depth, parent = null) =>
@@ -30,17 +30,6 @@
         }
     }
 
-    const reconstruct_addr = p2e =>
-    {
-        const p2i = p2e.index
-        const p1e = tables.p1[p2e.parent]
-        const p1i = p1e.index
-        const p0e = tables.p0[p1e.parent]
-        const p0i = p0e.index
-
-        return ((p0i << 30) + (p1i << 21) + (p2i << 12)) >>> 0;
-    }
-
     const ctx = get_wasm_context()
     setInterval(() => {
         tables_draft = {
@@ -53,6 +42,17 @@
 
         tables = tables_draft
     }, 500)
+
+    const reconstruct_addr = p2e =>
+    {
+        const p2i = p2e.index
+        const p1e = tables.p1[p2e.parent]
+        const p1i = p1e.index
+        const p0e = tables.p0[p1e.parent]
+        const p0i = p0e.index
+
+        return ((p0i << 30) + (p1i << 21) + (p2i << 12)) >>> 0;
+    }
 </script>
 
 <div>

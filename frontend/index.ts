@@ -56,6 +56,7 @@ const main = async () =>
     //         alloc = !alloc
     //     }
     // }, 200);
+    console.log(ctx.runtime_instance.exports)
 }
 
 window.addEventListener('load', main)

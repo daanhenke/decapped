@@ -25,7 +25,6 @@
 
     const on_tab_click = name =>
     {
-        console.log(name)
         if (is_active_tab(name)) currentTab = null
         else
         {
@@ -38,8 +37,6 @@
                 }
             }
         }
-
-        console.log(currentTab, name)
     }
 </script>
 
@@ -52,7 +49,7 @@
         {/each}
     </div>
     {#if currentTab !== null}
-        <svelte:component this={content[currentTab].component} />
+        <svelte:component this={content[currentTab].component} data={content[currentTab].data} />
     {/if}
 </div>
 

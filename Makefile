@@ -45,7 +45,8 @@ INTERPRETER_TARGET := $(BUILD_DIR)/interpreter.wasm
 RUNTIME_SOURCES := \
 	runtime/source/main.cc \
 	runtime/source/memory.cc \
-	runtime/source/guest_memory.cc
+	runtime/source/guest_memory.cc \
+	runtime/source/emulator.cc
 
 INTERPRETER_SOURCES := \
 	interpreter/source/main.cc
