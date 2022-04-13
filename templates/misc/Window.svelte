@@ -11,10 +11,10 @@
 </script>
 
 <div class="window {grow ? 'window-grow' : ''}">
-    <div class="window-titlebar">
+    <div on:click={onToggleMinimize} class="window-titlebar">
         <div>{title}</div>
         <div class="window-icons">
-            <span on:click={onToggleMinimize}>-</span>
+            <span>-</span>
             <span>x</span>
         </div>
     </div>

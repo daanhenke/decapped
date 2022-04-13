@@ -1,15 +1,18 @@
-#include <macros.hh>
 #include <memory.hh>
-#include <imports.hh>
+#include <guest_memory.hh>
 
-export_func int runtime_init()
+#include <macros.hh>
+#include <imports.hh>
+#include <types.hh>
+
+export_func status_t runtime_init()
 {
     log_string("hello world\n");
     malloc_init();
-
-    for (auto i = 0; i < 20; i++)
+    if (! guest_memory_init())
     {
-        log_string("something\n");
+        log_string("failed to init guest_memory!\n");
+        return 1;
     }
 
     return 0x1337;
