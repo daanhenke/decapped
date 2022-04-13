@@ -86,3 +86,7 @@
         {/each}
     </Window>
 </div>
+
+<style>
+    pre { font-family: 'Cozette', monospace; }
+</style>
