@@ -60,6 +60,34 @@ export function bytes_at(offset: number, count: number = 8): ArrayBuffer
     return ctx.memory.buffer.slice(offset, offset + count)
 }
 
+export function copy_bytes_to(offset: number, buffer: ArrayBuffer)
+{
+    const count = buffer.byteLength
+    const mem = new DataView(ctx.memory.buffer, offset, count)
+    const src = new DataView(buffer, 0, count)
+
+    let i = 0
+    while (i < count)
+    {
+        const to_go = count - i
+
+        if (to_go >= 4)
+        {
+            mem.setUint32(i, src.getUint32(i, true), true)
+            i += 4
+        }
+        else if (to_go >= 2)
+        {
+            mem.setUint16(i, src.getUint16(i, true), true)
+            i += 4
+        }
+        else
+        {
+            mem.setUint8(i, src.getUint8(i));
+        }
+    }
+}
+
 function string_at(offset: number)
 {
     let result = ''

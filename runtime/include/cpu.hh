@@ -21,8 +21,10 @@ typedef struct
 {
     uint8_t core_count;
     core_ctx_t** cores;
-} emu_ctx_t;
+} cpu_ctx_t;
 
-export_func emu_ctx_t* emulator_get_context();
-void emulator_init();
-void emulator_init_core(uint8_t index);
+cpu_ctx_t* cpu_get_context();
+void cpu_init();
+void cpu_init_core(uint8_t index);
+
+void cpu_core_set_rip(uint8_t core, uint64_t value);

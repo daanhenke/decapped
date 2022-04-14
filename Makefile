@@ -46,7 +46,9 @@ RUNTIME_SOURCES := \
 	runtime/source/main.cc \
 	runtime/source/memory.cc \
 	runtime/source/guest_memory.cc \
-	runtime/source/emulator.cc
+	runtime/source/cpu.cc \
+	runtime/source/decoder.cc \
+	runtime/source/disassembler.cc
 
 INTERPRETER_SOURCES := \
 	interpreter/source/main.cc

@@ -24,8 +24,6 @@ uintptr_t guest_memory_translate(uintptr_t address)
     address_translation_t trans;
     trans.full = address;
 
-    log_hex(trans.full, "translating ");
-
     auto p0 = &pt_root[trans.p0];
     if (p0->dest == 0)
     {

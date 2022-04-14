@@ -73,7 +73,6 @@ inline void set_bits(uint32_t index, uint32_t count, uint8_t value)
 
 void* malloc(uint32_t size, allocation_type_t type)
 {
-    log_hex(static_cast<uint8_t>(type), "malloc type ");
     auto size_in_pages = size / 0x1000;
     if (size_in_pages * 0x1000 != size) size_in_pages++;
 

@@ -12,7 +12,7 @@ import CoreView from './CoreView.svelte';
     {
         const ctx = get_wasm_context()
         if (ctx.runtime_instance === null) return
-        const cpu_ctx_base = ctx.runtime_instance.exports.emulator_get_context()
+        const cpu_ctx_base = ctx.runtime_instance.exports.__imp_cpu_get_context()
         const cpu_ctx_size = 8;
         const cpu_view = new DataView(bytes_at(cpu_ctx_base, cpu_ctx_size))
         core_count = cpu_view.getUint8(0)
