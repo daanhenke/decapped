@@ -13,7 +13,7 @@ import SubItem from "./SubItem.svelte";
             {#if item.children}
             <div class="topbar-item-children">
                 {#each item.children as child}
-                    <SubItem name={child.name} children={child.children} />
+                    <SubItem name={child.name} children={child.children} click={child.click} />
                 {/each}
             </div>
             {/if}

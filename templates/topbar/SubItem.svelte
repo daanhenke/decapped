@@ -1,15 +1,18 @@
 <script>
     export let name = ''
     export let children = []
+    export let click = null
 </script>
 
 <div class="topbar-subitem">
-    {name}
+    <span class="topbar-name" on:click={click}>
+        {name}
+    </span>
     {#if children.length}
         >
         <div class="topbar-subitem-children">
             {#each children as child}
-                <svelte:self name={child.name} children={child.children} />
+                <svelte:self name={child.name} children={child.children} click={child.click} />
             {/each}
         </div>
     {/if}

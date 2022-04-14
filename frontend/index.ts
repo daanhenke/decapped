@@ -36,7 +36,7 @@ const main = async () =>
     await floppy_load_http(0, 'floppies/x86BOOT.img')
     floppy_copy_sectors(0, 0, 17, floppy_base) // TODO: CHANGE TO 1 SECTOR
     ctx.runtime_instance.exports.__imp_cpu_core_set_rip(0, BigInt(floppy_base))
-    ctx.runtime_instance.exports.__imp_disassemble_current_instruction(0)
+    ctx.runtime_instance.exports.__imp_log_instruction(floppy_base)
 }
 
 window.addEventListener('load', main)

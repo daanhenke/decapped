@@ -1,7 +1,7 @@
 #include <memory.hh>
 #include <guest_memory.hh>
 #include <cpu.hh>
-#include <decoder.hh>
+#include <disassembler.hh>
 
 #include <macros.hh>
 #include <imports.hh>
@@ -17,6 +17,5 @@ export_func status_t runtime_init()
         return 1;
     }
     cpu_init();
-
     return 0x1337;
 }

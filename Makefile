@@ -48,7 +48,8 @@ RUNTIME_SOURCES := \
 	runtime/source/guest_memory.cc \
 	runtime/source/cpu.cc \
 	runtime/source/decoder.cc \
-	runtime/source/disassembler.cc
+	runtime/source/disassembler.cc \
+	runtime/source/string.cc
 
 INTERPRETER_SOURCES := \
 	interpreter/source/main.cc

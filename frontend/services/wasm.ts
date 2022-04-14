@@ -114,9 +114,22 @@ function string_at(offset: number)
     return result
 }
 
+function __memcpy(dest, src, size)
+{
+    const dview = new DataView(ctx.memory.buffer, dest, size)
+    const sview = new DataView(ctx.memory.buffer, src, size)
+
+    for (let i = 0; i < size; i++)
+    {
+        dview.setUint8(i, sview.getUint8(i));
+    }
+
+    return dest;
+}
+
 function __memset(ptr, value, num)
 {
-    const view = new DataView(bytes_at(ptr, num))
+    const view = new DataView(ctx.memory.buffer, ptr, num)
     for (let i = 0; i < num; i++)
     {
         view.setUint8(i, value);
@@ -127,7 +140,7 @@ function __memset(ptr, value, num)
 
 function __log_string(ptr: number)
 {
-    log_string(`runtime: ${string_at(ptr)}`)
+    log_string(`${string_at(ptr)}`)
 }
 
 function __log_hex(number: number, prefix: number)
@@ -177,6 +190,7 @@ export async function init_runtime()
     ctx.runtime_imports.memset = __memset
     ctx.runtime_imports.log_string = __log_string
     ctx.runtime_imports.log_hex = __log_hex
+    ctx.runtime_imports.memcpy = __memcpy
     const imports = ctx.runtime_imports
 
     ctx.memory = new WebAssembly.Memory({ initial: 10, maximum: 10, shared: true })

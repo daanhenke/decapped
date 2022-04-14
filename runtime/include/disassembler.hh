@@ -1,3 +1,5 @@
 #pragma once
 
-void disassemble(char* output);
+#include <types.hh>
+
+void log_instruction(uintptr_t guest_address);
