@@ -37,6 +37,7 @@ RUNTIME_INCLUDE_DIRS := \
 
 INTERPRETER_INCLUDE_DIRS := \
 	$(SHARED_INCLUDE_DIRS) \
+	$(RUNTIME_INCLUDE_DIRS) \
 	$(PROJECT_DIR)/interpreter/include
 
 RUNTIME_TARGET := $(BUILD_DIR)/runtime.wasm
@@ -62,7 +63,7 @@ INTERPRETER_OBJECTS := $(addprefix $(OBJECT_DIR)/,$(addsuffix .o,$(INTERPRETER_S
 
 $(OBJECT_DIR)/runtime/%.cc.o: $(PROJECT_DIR)/runtime/%.cc
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXX_FLAGS) $(RUNTIME_INCLUDES) -c $< -o $@
+	$(CXX) $(CXX_FLAGS) $(RUNTIME_INCLUDES) -DRUNTIME -c $< -o $@
 
 $(OBJECT_DIR)/interpreter/%.cc.o: $(PROJECT_DIR)/interpreter/%.cc
 	@mkdir -p $(dir $@)

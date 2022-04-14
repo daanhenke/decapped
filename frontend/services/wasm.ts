@@ -2,13 +2,14 @@ import { log_string } from './logger'
 
 interface wasm_context
 {
-    memory: WebAssembly.Memory|null
-    runtime_imports: any
+    memory: WebAssembly.Memory|null,
+    runtime_imports: any,
     runtime_instance: WebAssembly.Instance|null,
-    interpreter: WebAssembly.Instance|null
+    runtime_exports: any,
+    backend: WebAssembly.Instance|null
 }
 
-const ctx: wasm_context = { memory: null, runtime_imports: {}, runtime_instance: null, interpreter: null }
+const ctx: wasm_context = { memory: null, runtime_imports: {}, runtime_instance: null, backend: null, runtime_exports: {} }
 
 async function load_wasm_module(url: string)
 {
@@ -204,11 +205,27 @@ export async function init_runtime()
         },
     })
 
+    for (let key of Object.keys(ctx.runtime_instance.exports))
+    {
+        let pretty_key;
+        if (key.startsWith('__imp_'))
+        {
+            pretty_key = key.substring('__imp_'.length)
+        }
+        else
+        {
+            pretty_key = key;
+        }
+
+        ctx.runtime_exports[pretty_key] = ctx.runtime_instance.exports[key]
+    }
+
     const interpreter_module = await load_wasm_module('wasm/interpreter.wasm')
-    ctx.interpreter = new WebAssembly.Instance(interpreter_module, {
+    ctx.backend = new WebAssembly.Instance(interpreter_module, {
         env: {
             memory: ctx.memory,
-            ...imports
+            ...imports,
+            ...ctx.runtime_exports
         }
     })
 
@@ -219,9 +236,10 @@ export async function init_runtime()
     log_string(`malloc start: ${malloc_base.toString(16)}\n`)
     log_string(`runtime_init finished, result: 0x${runtime_result.toString(16)}\n`)
 
-log_string('calling interpreter_init\n')
-    const interpreter_result = ctx.interpreter.exports.interpreter_init()
-    log_string(`interpreter_init finished, result: 0x${interpreter_result.toString(16)}\n`)
+    log_string(`backend type: ${string_at(ctx.backend.exports.backend_get_name())}\n`)
+    log_string('calling backend_init\n')
+    const interpreter_result = ctx.backend.exports.backend_init()
+    log_string(`backend_init finished, result: 0x${interpreter_result.toString(16)}\n`)
 
     window.ctx = ctx
 }

@@ -45,19 +45,20 @@ export_func void __imp_disassemble_current_instruction(uint8_t core_index, char*
     disassemble_instruction(instruction, output);
 }
 
-void log_instruction(uintptr_t guest_address)
+void log_instruction(instruction_t instruction)
 {
     char* dest = malloc<char>(1024);
 
-    auto phys = guest_memory_translate(guest_address);
-    disassemble_instruction(decode_instruction(reinterpret_cast<uint8_t*>(phys), guest_address), dest);
+    disassemble_instruction(instruction, dest);
     log_string(dest);
     log_string("\n");
 
     free(dest);
 }
 
-export_func void __imp_log_instruction(uintptr_t guest_address)
+export_func void __imp_log_instruction2(uintptr_t guest_address)
 {
-    log_instruction(guest_address);
+    auto phys = guest_memory_translate(guest_address);
+    auto instruction = decode_instruction(reinterpret_cast<uint8_t*>(phys), guest_address);
+    log_instruction(instruction);
 }

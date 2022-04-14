@@ -1,5 +1,6 @@
 #pragma once
 
 #include <types.hh>
+#include <runtime.hh>
 
-void log_instruction(uintptr_t guest_address);
+export_func void log_instruction(instruction_t instruction);
