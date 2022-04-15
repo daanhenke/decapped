@@ -6,6 +6,28 @@
 #include <imports.hh>
 #include <guest_memory.hh>
 
+const char* reg_names_16[] = {
+    "ax",
+    "cx",
+    "dx",
+    "bx",
+    "sp",
+    "bp",
+    "si",
+    "di"
+};
+
+const char* sreg_names_16[] = {
+    "es",
+    "cs",
+    "ss",
+    "ds",
+    "fs",
+    "gs",
+    "<ERROR>",
+    "<ERROR>"
+};
+
 void disassemble_instruction(instruction_t instruction, char* output)
 {
     if (instruction.opcode == opcode_t::unknown) return;
@@ -15,10 +37,14 @@ void disassemble_instruction(instruction_t instruction, char* output)
     switch (instruction.opcode)
     {
         case opcode_t::unknown:
+        log_string("dissasembling unknown opcode!\n");
             return;
 
-        case opcode_t::jmp: output = strcat(output, "jmp"); break;
-        case opcode_t::cli: output = strcat(output, "cli"); break;
+        case opcode_t::_xor: output = strcat(output, "xor");    break;
+        case opcode_t::mov: output = strcat(output, "mov");     break;
+        case opcode_t::jmp: output = strcat(output, "jmp");     break;
+        case opcode_t::cli: output = strcat(output, "cli");     break;
+        case opcode_t::cld: output = strcat(output, "cld");     break;
     }
 
     if (instruction.args[0].type == argument_type_t::none) return;
@@ -31,11 +57,21 @@ void disassemble_instruction(instruction_t instruction, char* output)
         switch (arg.type)
         {
         case argument_type_t::rel8:
-            auto dest = instruction.address + instruction.length + arg.value;
-            ultoa(dest, output, 16);
+            ultoa(instruction.address + instruction.length + arg.value, output, 16);
+            break;
+        case argument_type_t::reg16:
+            output = strcat(output, reg_names_16[arg.value]);
+            break;
+        case argument_type_t::sreg16:
+            output = strcat(output, sreg_names_16[arg.value]);
             break;
         }
         arg_i++;
+
+        if (instruction.args[arg_i].type != argument_type_t::none)
+        {
+            output = strcat(output, ", ");
+        }
     }
 }
 

@@ -50,8 +50,8 @@ const main = async () =>
         }, 100)
     }
 
-    log_string("waiting for 5 sec, then starting backend\n");
-    setTimeout(() => doTest(), 5000)
+    log_string("waiting for 3 sec, then starting backend\n");
+    setTimeout(() => doTest(), 3000)
 
 }
 

@@ -198,7 +198,7 @@ export async function init_runtime()
     log_string(`allocated memory pool, size: 0x${ctx.memory.buffer.byteLength.toString(16)}\n`)
 
     const runtime_module = await load_wasm_module('wasm/runtime.wasm')
-    ctx.runtime_instance = new WebAssembly.Instance(runtime_module, {
+    ctx.runtime_instance = await WebAssembly.instantiate(runtime_module, {
         env: {
             memory: ctx.memory,
             ...imports

@@ -22,21 +22,26 @@ import CoreView from './CoreView.svelte';
         const core_ptr_view = new DataView(bytes_at(core_ptr_base, core_ptr_size * core_count))
 
         const regs = [ 'rax', 'rbx', 'rcx', 'rdx' ,'rdi', 'rsi', 'rbp', 'rsp', 'rip', 'rflags' ]
+        const sregs = [ 'es', 'cs', 'ss', 'ds' ,'fs', 'gs' ]
         const new_tabs = []
         for (let i = 0; i < core_count; i++)
         {
             const core_base = core_ptr_view.getUint32(i * core_ptr_size, true)
-            const core_size = 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8;
+            const core_size = 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 12; // lol
             const core_view = new DataView(bytes_at(core_base, core_size))
-
-            const core = {
-                registers: []
-            }
+            const core = { registers: [] }
 
             for (let index in regs)
             {
                 const name = regs[index]
                 const value = core_view.getBigUint64(8 * index, true)
+                core.registers.push({ name, value })
+            }
+
+            for (let index in sregs)
+            {
+                const name = sregs[index]
+                const value = core_view.getUint16((core_size - 12) + (index * 2), true)
                 core.registers.push({ name, value })
             }
 

@@ -17,6 +17,12 @@ typedef struct
     uint64_t rsp;
     uint64_t rip;
     uint64_t rflags;
+    uint16_t es;
+    uint16_t cs;
+    uint16_t ss;
+    uint16_t ds;
+    uint16_t fs;
+    uint16_t gs;
 } core_ctx_t;
 
 typedef struct
@@ -28,14 +34,19 @@ typedef struct
 enum class opcode_t
 {
     unknown,
+    _xor,
+    mov,
     jmp,
     cli,
+    cld,
 };
 
 enum class argument_type_t
 {
     none,
     rel8,
+    reg16,
+    sreg16,
 };
 
 typedef struct
@@ -49,7 +60,7 @@ typedef struct
     opcode_t opcode;
     uintptr_t address;
     uint8_t length;
-    arg_t args[2];
+    arg_t args[4];
 } instruction_t;
 
 #ifndef RUNTIME
