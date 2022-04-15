@@ -26,7 +26,7 @@
 
 <style>
     .window { margin: 8px 0; padding: 2px; border: 1px white solid; display: flex; flex-direction: column; }
-    .window-grow { flex: 1 1 auto; }
+    .window-grow { max-height: 50vh; }
     .window-titlebar { display: flex; justify-content: space-between; padding: 0 4px; }
     .window-icons { cursor: pointer; }
     .window-content { border-top: 1px white dotted;  padding: 5px; flex-grow: 1; overflow-y: auto; }

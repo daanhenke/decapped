@@ -37,21 +37,19 @@ const main = async () =>
     floppy_copy_sectors(0, 0, 17, floppy_base) // TODO: CHANGE TO 1 SECTOR
     ctx.runtime_instance.exports.__imp_cpu_core_set_rip(0, BigInt(floppy_base))
 
-    window.doTest = () =>
+    const tick = () =>
     {
-        const testInterval = setInterval(() =>
+        const result = ctx.backend.exports.backend_tick(0) >>> 0
+        if (result & 0x80000000)
         {
-            const result = ctx.backend.exports.backend_tick(0) >>> 0
-            if (result & 0x80000000)
-            {
-                log_string(`encountered an error: ${result.toString(16)}`)
-                clearInterval(testInterval)
-            }
-        }, 100)
-    }
+            log_string(`encountered an error: ${result.toString(16)}`)
+            return
+        }
 
+        requestAnimationFrame(tick)
+    }
     log_string("waiting for 3 sec, then starting backend\n");
-    setTimeout(() => doTest(), 3000)
+    setTimeout(tick, 3000)
 
 }
 

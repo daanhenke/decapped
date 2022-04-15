@@ -34,7 +34,7 @@
         from { color: white }
         to { color: black; }
     }
-    .log-container { display: flex; flex-direction: column; }
+    .log-container { display: flex; flex-direction: column; height: 50%; }
     .log-message { display: flex; }
     .log-message:last-child:after { content: '_'; padding-left: 2px; animation: blink 1s; animation-iteration-count: infinite; }
 </style>

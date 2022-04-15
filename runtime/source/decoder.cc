@@ -9,6 +9,13 @@ void decode_rel8(uint8_t* code, arg_t* dest)
     dest->value = *code;
 }
 
+void decode_imm16(uint8_t* code, arg_t* dest)
+{
+    auto u16 = reinterpret_cast<uint16_t*>(code);
+    dest->type = argument_type_t::imm16;
+    dest->value = *u16;
+}
+
 void decode_modrm(uint8_t* code, arg_t* start, bool reg_first = false, argument_type_t reg_type = argument_type_t::reg16, argument_type_t rm_type = argument_type_t::reg16)
 {
     modrm_t modrm;
@@ -53,8 +60,19 @@ instruction_t decode_instruction(uint8_t* instruction, uintptr_t address)
     switch (opcode)
     {
     case 0x31:  result.opcode = opcode_t::_xor; decode_modrm(instruction++, &(result.args[0])); break;
+    case 0x89:  result.opcode = opcode_t::mov; decode_modrm(instruction++, &(result.args[0]));  break;
     case 0x8E:  result.opcode = opcode_t::mov; decode_modrm(instruction++, &(result.args[0]), true, argument_type_t::sreg16);  break;
+    case 0xA5:  result.opcode = opcode_t::movs; break;
+    case 0xB8:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 0; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xB9:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 1; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xBA:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 2; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xBB:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 3; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xBC:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 4; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xBD:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 5; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xBE:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 6; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xBF:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 7; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
     case 0xEB:  result.opcode = opcode_t::jmp; decode_rel8(instruction++, &(result.args[0]));   break;
+    case 0xF3:  result.opcode = opcode_t::rep;                                                  break;
     case 0xFA:  result.opcode = opcode_t::cli;                                                  break;
     case 0xFC:  result.opcode = opcode_t::cld;                                                  break;
     default:    log_hex(opcode, "unknown opcode: ");                                            break;
@@ -65,10 +83,8 @@ instruction_t decode_instruction(uint8_t* instruction, uintptr_t address)
     return result;
 }
 
-instruction_t decode_current_instruction(uint8_t core_index)
+instruction_t decode_current_instruction(core_ctx_t* core)
 {
-    auto cpu = cpu_get_context();
-    auto core = cpu->cores[core_index];
     auto phys = guest_memory_translate(core->rip);
     return decode_instruction(reinterpret_cast<uint8_t*>(phys), core->rip);
 }

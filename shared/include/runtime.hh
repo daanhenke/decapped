@@ -23,6 +23,7 @@ typedef struct
     uint16_t ds;
     uint16_t fs;
     uint16_t gs;
+    uint8_t rep_mode;
 } core_ctx_t;
 
 typedef struct
@@ -35,8 +36,10 @@ enum class opcode_t
 {
     unknown,
     _xor,
+    movs,
     mov,
     jmp,
+    rep,
     cli,
     cld,
 };
@@ -45,6 +48,7 @@ enum class argument_type_t
 {
     none,
     rel8,
+    imm16,
     reg16,
     sreg16,
 };
@@ -64,7 +68,8 @@ typedef struct
 } instruction_t;
 
 #ifndef RUNTIME
-import_func instruction_t decode_current_instruction(uint8_t core_index);
-import_func void log_instruction(instruction_t instruction);
+import_func instruction_t decode_current_instruction(core_ctx_t* core);
+import_func void log_instruction(instruction_t instruction, bool prefix = true);
 import_func cpu_ctx_t* cpu_get_context();
+import_func uintptr_t guest_memory_translate(uintptr_t address);
 #endif

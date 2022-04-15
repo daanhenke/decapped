@@ -28,12 +28,15 @@ const char* sreg_names_16[] = {
     "<ERROR>"
 };
 
-void disassemble_instruction(instruction_t instruction, char* output)
+void disassemble_instruction(instruction_t instruction, char* output, bool prefix)
 {
     if (instruction.opcode == opcode_t::unknown) return;
 
-    ultoa(instruction.address, output, 16);
-    output = strcat(output, ": ");
+    if (prefix)
+    {
+        ultoa(instruction.address, output, 16);
+        output = strcat(output, ": ");
+    }
     switch (instruction.opcode)
     {
         case opcode_t::unknown:
@@ -42,9 +45,16 @@ void disassemble_instruction(instruction_t instruction, char* output)
 
         case opcode_t::_xor: output = strcat(output, "xor");    break;
         case opcode_t::mov: output = strcat(output, "mov");     break;
+        case opcode_t::movs: output = strcat(output, "movs");   break;
         case opcode_t::jmp: output = strcat(output, "jmp");     break;
+        case opcode_t::rep: output = strcat(output, "rep");     break;
         case opcode_t::cli: output = strcat(output, "cli");     break;
         case opcode_t::cld: output = strcat(output, "cld");     break;
+    }
+
+    if (instruction.opcode == opcode_t::rep)
+    {
+        return;
     }
 
     if (instruction.args[0].type == argument_type_t::none) return;
@@ -59,6 +69,8 @@ void disassemble_instruction(instruction_t instruction, char* output)
         case argument_type_t::rel8:
             ultoa(instruction.address + instruction.length + arg.value, output, 16);
             break;
+        case argument_type_t::imm16:
+            ultoa(arg.value, output, 16);
         case argument_type_t::reg16:
             output = strcat(output, reg_names_16[arg.value]);
             break;
@@ -75,26 +87,12 @@ void disassemble_instruction(instruction_t instruction, char* output)
     }
 }
 
-export_func void __imp_disassemble_current_instruction(uint8_t core_index, char* output)
-{
-    auto instruction = decode_current_instruction(core_index);
-    disassemble_instruction(instruction, output);
-}
-
-void log_instruction(instruction_t instruction)
+void log_instruction(instruction_t instruction, bool prefix)
 {
     char* dest = malloc<char>(1024);
 
-    disassemble_instruction(instruction, dest);
+    disassemble_instruction(instruction, dest, prefix);
     log_string(dest);
-    log_string("\n");
 
     free(dest);
-}
-
-export_func void __imp_log_instruction2(uintptr_t guest_address)
-{
-    auto phys = guest_memory_translate(guest_address);
-    auto instruction = decode_instruction(reinterpret_cast<uint8_t*>(phys), guest_address);
-    log_instruction(instruction);
 }

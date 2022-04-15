@@ -60,6 +60,19 @@ inline void mov(core_ctx_t* core, instruction_t instruction)
         auto source_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
         *dest_reg = *source_reg;
     }
+    else if (instruction.args[0].type == argument_type_t::reg16)
+    {
+        auto dest_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
+        if (instruction.args[1].type == argument_type_t::imm16)
+        {
+            *dest_reg = instruction.args[1].value;
+        }
+        else if (instruction.args[1].type == argument_type_t::reg16)
+        {
+            auto source_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
+            *dest_reg = *source_reg;
+        }
+    }
 
     advance_rip(core, instruction);
 }
@@ -71,6 +84,37 @@ inline void jmp(core_ctx_t* core, instruction_t instruction)
         case argument_type_t::rel8: core->rip += (instruction.args[0].value + instruction.length);      break;
         default:                                                                                        break;
     }
+}
+
+inline void rep(core_ctx_t* core, instruction_t instruction)
+{
+    core->rep_mode = 1;
+    advance_rip(core, instruction);
+}
+
+inline void movs(core_ctx_t* core, instruction_t instruction)
+{
+    if (core->rep_mode == 1)
+    {
+        if (static_cast<uint16_t>(core->rcx) == 0)
+        {
+            core->rep_mode = 0;
+        }
+        else core->rcx--;
+    }
+    uint32_t ds = core->ds;
+    uint32_t es = core->es;
+    uint32_t si = static_cast<uint16_t>(core->rsi);
+    uint32_t di = static_cast<uint16_t>(core->rdi);
+
+    uint32_t source_addr = (ds << 4) + si;
+    uint32_t dest_addr = (es << 4) + di;
+
+    auto source = reinterpret_cast<uint16_t*>(guest_memory_translate(source_addr));
+    auto dest = reinterpret_cast<uint16_t*>(guest_memory_translate(dest_addr));
+    *dest = *source;
+
+    if (core->rep_mode == 0) advance_rip(core, instruction);
 }
 
 inline void cli(core_ctx_t* core, instruction_t instruction)
@@ -101,16 +145,19 @@ status_t backend_tick(uint8_t core_index)
     auto cpu = cpu_get_context();
     auto core = cpu->cores[core_index];
 
-    auto instr = decode_current_instruction(core_index);
+    auto instr = decode_current_instruction(core);
     if (instr.opcode == opcode_t::unknown) return mkerror(0);
 
     log_instruction(instr);
+    log_string("\n");
 
     switch(instr.opcode)
     {
         case opcode_t::_xor:    call_handler(_xor);
         case opcode_t::mov:     call_handler(mov);
+        case opcode_t::movs:    call_handler(movs);
         case opcode_t::jmp:     call_handler(jmp);
+        case opcode_t::rep:     call_handler(rep);
         case opcode_t::cli:     call_handler(cli);
         case opcode_t::cld:     call_handler(cld);
     }
