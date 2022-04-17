@@ -32,7 +32,7 @@ const main = async () =>
 
     console.log('runtime exports:', ctx.runtime_exports)
 
-    const floppy_base = 0x20304050
+    const floppy_base = 0x7c00
     await floppy_load_http(0, 'floppies/x86BOOT.img')
     floppy_copy_sectors(0, 0, 17, floppy_base) // TODO: CHANGE TO 1 SECTOR
     ctx.runtime_instance.exports.__imp_cpu_core_set_rip(0, BigInt(floppy_base))

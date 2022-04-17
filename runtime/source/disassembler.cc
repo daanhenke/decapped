@@ -28,6 +28,17 @@ const char* sreg_names_16[] = {
     "<ERROR>"
 };
 
+const char* displacement8_names[] = {
+    "[bx + si]",
+    "[bx + di]",
+    "[bp + si]",
+    "[bp + di]",
+    "[si]",
+    "[di]",
+    "[bp]",
+    "[bx]"
+};
+
 void disassemble_instruction(instruction_t instruction, char* output, bool prefix)
 {
     if (instruction.opcode == opcode_t::unknown) return;
@@ -44,17 +55,13 @@ void disassemble_instruction(instruction_t instruction, char* output, bool prefi
             return;
 
         case opcode_t::_xor: output = strcat(output, "xor");    break;
+        case opcode_t::lea: output = strcat(output, "lea");     break;
         case opcode_t::mov: output = strcat(output, "mov");     break;
         case opcode_t::movs: output = strcat(output, "movs");   break;
         case opcode_t::jmp: output = strcat(output, "jmp");     break;
         case opcode_t::rep: output = strcat(output, "rep");     break;
         case opcode_t::cli: output = strcat(output, "cli");     break;
         case opcode_t::cld: output = strcat(output, "cld");     break;
-    }
-
-    if (instruction.opcode == opcode_t::rep)
-    {
-        return;
     }
 
     if (instruction.args[0].type == argument_type_t::none) return;
@@ -76,6 +83,14 @@ void disassemble_instruction(instruction_t instruction, char* output, bool prefi
             break;
         case argument_type_t::sreg16:
             output = strcat(output, sreg_names_16[arg.value]);
+            break;
+        case argument_type_t::pointer:
+            ultoa(arg.value, output, 16);
+            break;
+        case argument_type_t::displacement8:
+            output = strcat(output, displacement8_names[arg.value]);
+            arg_i++;
+            itoa(instruction.args[arg_i].value, output, 16);
             break;
         }
         arg_i++;

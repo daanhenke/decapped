@@ -40,6 +40,20 @@ inline T* seg_reg_as(core_ctx_t* core, uint8_t reg_idx)
     }
 }
 
+template <typename T>
+inline T get_displacement8(core_ctx_t* core, arg_t* first_disp_arg)
+{
+    auto displacement = static_cast<int8_t>(first_disp_arg[1].value);
+    switch (first_disp_arg->value)
+    {
+    case 0x6: return static_cast<T>(core->rbp) + displacement; break;
+
+    default: break;
+    }
+
+    return 0;
+}
+
 inline void _xor(core_ctx_t* core, instruction_t instruction)
 {
     if (instruction.args[0].type == argument_type_t::reg16)
@@ -49,6 +63,17 @@ inline void _xor(core_ctx_t* core, instruction_t instruction)
         *dest_reg = *dest_reg ^ *source_reg;
     }
 
+    advance_rip(core, instruction);
+}
+
+inline void lea(core_ctx_t* core, instruction_t instruction)
+{
+    auto dest_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
+
+    if (instruction.args[1].type == argument_type_t::displacement8)
+    {
+        *dest_reg = get_displacement8<uint16_t>(core, &(instruction.args[1]));
+    }
     advance_rip(core, instruction);
 }
 
@@ -82,6 +107,7 @@ inline void jmp(core_ctx_t* core, instruction_t instruction)
     switch (instruction.args[0].type)
     {
         case argument_type_t::rel8: core->rip += (instruction.args[0].value + instruction.length);      break;
+        case argument_type_t::pointer: core->rip = instruction.args[0].value;                           break;
         default:                                                                                        break;
     }
 }
@@ -89,6 +115,7 @@ inline void jmp(core_ctx_t* core, instruction_t instruction)
 inline void rep(core_ctx_t* core, instruction_t instruction)
 {
     core->rep_mode = 1;
+    core->first_rep_cycle = true;
     advance_rip(core, instruction);
 }
 
@@ -112,6 +139,10 @@ inline void movs(core_ctx_t* core, instruction_t instruction)
 
     auto source = reinterpret_cast<uint16_t*>(guest_memory_translate(source_addr));
     auto dest = reinterpret_cast<uint16_t*>(guest_memory_translate(dest_addr));
+
+    core->rsi++;
+    core->rdi++;
+
     *dest = *source;
 
     if (core->rep_mode == 0) advance_rip(core, instruction);
@@ -148,18 +179,24 @@ status_t backend_tick(uint8_t core_index)
     auto instr = decode_current_instruction(core);
     if (instr.opcode == opcode_t::unknown) return mkerror(0);
 
-    log_instruction(instr);
-    log_string("\n");
+    if (core->rep_mode == 0 || core->first_rep_cycle)
+    {
+        core->first_rep_cycle = false;
+        log_instruction(instr);
+        log_string("\n");
+    }
 
     switch(instr.opcode)
     {
         case opcode_t::_xor:    call_handler(_xor);
         case opcode_t::mov:     call_handler(mov);
         case opcode_t::movs:    call_handler(movs);
+        case opcode_t::lea:    call_handler(lea);
         case opcode_t::jmp:     call_handler(jmp);
         case opcode_t::rep:     call_handler(rep);
         case opcode_t::cli:     call_handler(cli);
         case opcode_t::cld:     call_handler(cld);
+        default: return mkerror(1);
     }
 
     return 0;

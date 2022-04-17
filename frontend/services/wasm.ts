@@ -80,11 +80,12 @@ export function copy_bytes_to(offset: number, buffer: ArrayBuffer)
         else if (to_go >= 2)
         {
             mem.setUint16(i, src.getUint16(i, true), true)
-            i += 4
+            i += 2
         }
         else
         {
             mem.setUint8(i, src.getUint8(i));
+            i++
         }
     }
 }
@@ -154,6 +155,15 @@ function __log_hex(number: number, prefix: number)
     log_string(`${number.toString(16)}\n`)
 }
 
+function __itoa(number, dest_buffer, radix)
+{
+    number = number << 24 >> 24
+    const value = number.toString(radix)
+    const bytes = new TextEncoder().encode(value)
+    console.log(bytes)
+    copy_bytes_to(dest_buffer, bytes.buffer)
+}
+
 interface allocator_info
 {
     pages_max: number
@@ -192,6 +202,7 @@ export async function init_runtime()
     ctx.runtime_imports.log_string = __log_string
     ctx.runtime_imports.log_hex = __log_hex
     ctx.runtime_imports.memcpy = __memcpy
+    ctx.runtime_imports.itoa = __itoa
     const imports = ctx.runtime_imports
 
     ctx.memory = new WebAssembly.Memory({ initial: 10, maximum: 10, shared: true })

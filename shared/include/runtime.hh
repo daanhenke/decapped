@@ -24,6 +24,7 @@ typedef struct
     uint16_t fs;
     uint16_t gs;
     uint8_t rep_mode;
+    bool first_rep_cycle;
 } core_ctx_t;
 
 typedef struct
@@ -37,6 +38,7 @@ enum class opcode_t
     unknown,
     _xor,
     movs,
+    lea,
     mov,
     jmp,
     rep,
@@ -51,6 +53,8 @@ enum class argument_type_t
     imm16,
     reg16,
     sreg16,
+    pointer,
+    displacement8
 };
 
 typedef struct
