@@ -8,6 +8,24 @@ inline void advance_rip(core_ctx_t* core, instruction_t instruction)
     core->rip += instruction.length;
 }
 
+#define not_implemented() log_hex(__LINE__, "something isn't implemented, triggered at line ")
+
+inline uint8_t* gp_reg_half(core_ctx_t* core, uint8_t reg_idx)
+{
+    switch (reg_idx)
+    {
+    case 0x0: return reinterpret_cast<uint8_t*>(&core->rax);
+    case 0x1: return reinterpret_cast<uint8_t*>(&core->rcx);
+    case 0x2: return reinterpret_cast<uint8_t*>(&core->rdx);
+    case 0x3: return reinterpret_cast<uint8_t*>(&core->rbx);
+    case 0x4: return reinterpret_cast<uint8_t*>(&core->rax) + 1;
+    case 0x5: return reinterpret_cast<uint8_t*>(&core->rcx) + 1;
+    case 0x6: return reinterpret_cast<uint8_t*>(&core->rdx) + 1;
+    case 0x7: return reinterpret_cast<uint8_t*>(&core->rbx) + 1;
+    default:  return nullptr;
+    }
+}
+
 template <typename T>
 inline T* gp_reg_as(core_ctx_t* core, uint8_t reg_idx)
 {
@@ -48,10 +66,131 @@ inline T get_displacement8(core_ctx_t* core, arg_t* first_disp_arg)
     {
     case 0x6: return static_cast<T>(core->rbp) + displacement; break;
 
-    default: break;
+    default: not_implemented(); break;
     }
 
     return 0;
+}
+
+inline void shr(core_ctx_t* core, instruction_t instruction)
+{
+    if (instruction.args[0].type == argument_type_t::reg16)
+    {
+        auto dest_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
+        if (instruction.args[1].type == argument_type_t::reg8)
+        {
+            auto times_reg = gp_reg_half(core, instruction.args[1].value);
+            *dest_reg >>= *times_reg;
+        }
+        else
+        {
+            not_implemented();
+        }
+    }
+    else
+    {
+        not_implemented();
+    }
+
+    advance_rip(core, instruction);
+}
+
+inline void add(core_ctx_t* core, instruction_t instruction)
+{
+    if (instruction.args[0].type == argument_type_t::reg16)
+    {
+        auto dest_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
+
+        if (instruction.args[1].type == argument_type_t::displacement8)
+        {
+            auto src_guest = get_displacement8<uint16_t>(core, &(instruction.args[1]));
+            auto src_ptr = reinterpret_cast<uint16_t*>(guest_memory_translate(src_guest));
+            auto result = *dest_reg + *src_ptr;
+            core->rflags.cf = result < *dest_reg;
+            *dest_reg = result;
+        }
+        else if (instruction.args[1].type == argument_type_t::reg16)
+        {
+            auto src_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
+            *dest_reg = *src_reg;
+        }
+        else
+        {
+            not_implemented();
+        }
+    }
+    else
+    {
+        not_implemented();
+    }
+    advance_rip(core, instruction);
+}
+
+inline void adc(core_ctx_t* core, instruction_t instruction)
+{
+    if (instruction.args[0].type == argument_type_t::reg16)
+    {
+        auto dest_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
+
+        if (instruction.args[1].type == argument_type_t::imm8)
+        {
+            auto result = *dest_reg + instruction.args[1].value + core->rflags.cf;
+            core->rflags.cf = result < *dest_reg;
+            *dest_reg = result;
+        }
+        else if (instruction.args[1].type == argument_type_t::reg16)
+        {
+            auto src_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
+            auto result = *dest_reg + *src_reg + core->rflags.cf;
+            *dest_reg = result;
+        }
+        else
+        {
+            not_implemented();
+        }
+    }
+    else
+    {
+        not_implemented();
+    }
+    advance_rip(core, instruction);
+}
+
+inline void mul(core_ctx_t* core, instruction_t instruction)
+{
+    auto dest_lo = reinterpret_cast<uint16_t*>(&core->rax);
+    auto dest_hi = reinterpret_cast<uint16_t*>(&core->rdx);
+    uint16_t value = 0;
+    if (instruction.args[0].type == argument_type_t::displacement8)
+    {
+        auto value_guest = get_displacement8<uint16_t>(core, &(instruction.args[0]));
+        value = *reinterpret_cast<uint16_t*>(guest_memory_translate(value_guest));
+
+
+    }
+    else if (instruction.args[0].type == argument_type_t::reg16)
+    {
+        auto value_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
+        value = *value_reg;
+    }
+    else
+    {
+        not_implemented();
+    }
+
+    uint32_t result = *dest_lo * value;
+    *dest_lo = result & 0xFFFF;
+    *dest_hi = result >> 16;
+
+    advance_rip(core, instruction);
+}
+
+inline void cbw(core_ctx_t* core, instruction_t instruction)
+{
+    auto byte = static_cast<uint8_t>(core->rax);
+    auto dest = reinterpret_cast<uint16_t*>(&core->rax);
+    *dest = byte | (((byte & 0b10000000) ? 0xFF : 0) << 8);
+    advance_rip(core, instruction);
 }
 
 inline void _xor(core_ctx_t* core, instruction_t instruction)
@@ -61,6 +200,10 @@ inline void _xor(core_ctx_t* core, instruction_t instruction)
         auto dest_reg = gp_reg_as<uint16_t>(core, instruction.args[0].value);
         auto source_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
         *dest_reg = *dest_reg ^ *source_reg;
+    }
+    else
+    {
+        not_implemented();
     }
 
     advance_rip(core, instruction);
@@ -74,6 +217,10 @@ inline void lea(core_ctx_t* core, instruction_t instruction)
     {
         *dest_reg = get_displacement8<uint16_t>(core, &(instruction.args[1]));
     }
+    else
+    {
+        not_implemented();
+    }
     advance_rip(core, instruction);
 }
 
@@ -82,8 +229,16 @@ inline void mov(core_ctx_t* core, instruction_t instruction)
     if (instruction.args[0].type == argument_type_t::sreg16)
     {
         auto dest_reg = seg_reg_as<uint16_t>(core, instruction.args[0].value);
-        auto source_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
-        *dest_reg = *source_reg;
+
+        if (instruction.args[1].type == argument_type_t::reg16)
+        {
+            auto source_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
+            *dest_reg = *source_reg;
+        }
+        else
+        {
+            not_implemented();
+        }
     }
     else if (instruction.args[0].type == argument_type_t::reg16)
     {
@@ -97,6 +252,66 @@ inline void mov(core_ctx_t* core, instruction_t instruction)
             auto source_reg = gp_reg_as<uint16_t>(core, instruction.args[1].value);
             *dest_reg = *source_reg;
         }
+        else if (instruction.args[1].type == argument_type_t::sreg16)
+        {
+            auto source_reg = seg_reg_as<uint16_t>(core, instruction.args[1].value);
+            *dest_reg = *source_reg;
+        }
+        else if (instruction.args[1].type == argument_type_t::displacement8)
+        {
+            auto src_guest = get_displacement8<uint16_t>(core, &(instruction.args[1]));
+            auto src_ptr = reinterpret_cast<uint16_t*>(guest_memory_translate(src_guest));
+            *dest_reg = *src_ptr;
+        }
+        else
+        {
+            not_implemented();
+        }
+    }
+    else if (instruction.args[0].type == argument_type_t::reg8)
+    {
+        auto dest_reg = gp_reg_half(core, instruction.args[0].value);
+
+        if (instruction.args[1].type == argument_type_t::displacement8)
+        {
+            auto src_guest = get_displacement8<uint16_t>(core, &(instruction.args[1]));
+            auto src_ptr = reinterpret_cast<uint8_t*>(guest_memory_translate(src_guest));
+            *dest_reg = *src_ptr;
+        }
+        else if (instruction.args[1].type == argument_type_t::imm8)
+        {
+            *dest_reg = static_cast<uint8_t>(instruction.args[1].value);
+        }
+        else
+        {
+            not_implemented();
+        }
+    }
+    else if (instruction.args[0].type == argument_type_t::displacement8)
+    {
+        auto dest_guest = get_displacement8<uint16_t>(core, &(instruction.args[0]));
+        auto dest_ptr = reinterpret_cast<uint16_t*>(guest_memory_translate(dest_guest));
+
+        if (instruction.args[2].type == argument_type_t::imm16)
+        {
+            *dest_ptr = static_cast<uint16_t>(instruction.args[2].value);
+        }
+        else if (instruction.args[2].type == argument_type_t::reg16)
+        {
+            *dest_ptr = *gp_reg_as<uint16_t>(core, instruction.args[2].value);
+        }
+        else if (instruction.args[2].type == argument_type_t::sreg16)
+        {
+            *dest_ptr = *seg_reg_as<uint16_t>(core, instruction.args[2].value);
+        }
+        else
+        {
+            not_implemented();
+        }
+    }
+    else
+    {
+        not_implemented();
     }
 
     advance_rip(core, instruction);
@@ -108,7 +323,7 @@ inline void jmp(core_ctx_t* core, instruction_t instruction)
     {
         case argument_type_t::rel8: core->rip += (instruction.args[0].value + instruction.length);      break;
         case argument_type_t::pointer: core->rip = instruction.args[0].value;                           break;
-        default:                                                                                        break;
+        default: not_implemented();                                                                     break;
     }
 }
 
@@ -154,9 +369,21 @@ inline void cli(core_ctx_t* core, instruction_t instruction)
     advance_rip(core, instruction);
 }
 
+inline void sti(core_ctx_t* core, instruction_t instruction)
+{
+    // TODO: IMPLEMENT
+    advance_rip(core, instruction);
+}
+
 inline void cld(core_ctx_t* core, instruction_t instruction)
 {
     // TODO: IMPLEMENT
+    advance_rip(core, instruction);
+}
+
+
+inline void nop(core_ctx_t* core, instruction_t instruction)
+{
     advance_rip(core, instruction);
 }
 
@@ -188,14 +415,21 @@ status_t backend_tick(uint8_t core_index)
 
     switch(instr.opcode)
     {
+        case opcode_t::add:     call_handler(add);
+        case opcode_t::adc:     call_handler(adc);
         case opcode_t::_xor:    call_handler(_xor);
         case opcode_t::mov:     call_handler(mov);
         case opcode_t::movs:    call_handler(movs);
-        case opcode_t::lea:    call_handler(lea);
+        case opcode_t::lea:     call_handler(lea);
         case opcode_t::jmp:     call_handler(jmp);
         case opcode_t::rep:     call_handler(rep);
         case opcode_t::cli:     call_handler(cli);
+        case opcode_t::sti:     call_handler(sti);
         case opcode_t::cld:     call_handler(cld);
+        case opcode_t::nop:     call_handler(nop);
+        case opcode_t::cbw:     call_handler(cbw);
+        case opcode_t::mul:     call_handler(mul);
+        case opcode_t::shr:     call_handler(shr);
         default: return mkerror(1);
     }
 

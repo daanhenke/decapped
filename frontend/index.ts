@@ -49,7 +49,7 @@ const main = async () =>
         requestAnimationFrame(tick)
     }
     log_string("waiting for 3 sec, then starting backend\n");
-    setTimeout(tick, 3000)
+    setTimeout(tick, 1)
 
 }
 

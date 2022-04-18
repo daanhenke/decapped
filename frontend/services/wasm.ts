@@ -158,10 +158,11 @@ function __log_hex(number: number, prefix: number)
 function __itoa(number, dest_buffer, radix)
 {
     number = number << 24 >> 24
-    const value = number.toString(radix)
+    const value = `${number.toString(radix)}`
     const bytes = new TextEncoder().encode(value)
-    console.log(bytes)
+    console.log(value, bytes)
     copy_bytes_to(dest_buffer, bytes.buffer)
+    return dest_buffer + bytes.byteLength
 }
 
 interface allocator_info
@@ -232,7 +233,7 @@ export async function init_runtime()
     }
 
     const interpreter_module = await load_wasm_module('wasm/interpreter.wasm')
-    ctx.backend = new WebAssembly.Instance(interpreter_module, {
+    ctx.backend = await WebAssembly.instantiate(interpreter_module, {
         env: {
             memory: ctx.memory,
             ...imports,

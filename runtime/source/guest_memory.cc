@@ -21,6 +21,10 @@ export_func uintptr_t guest_memory_get_p0()
 
 uintptr_t guest_memory_translate(uintptr_t address)
 {
+    if (address == 0)
+    {
+        log_string("translating null ptr, probably bad!\n");
+    }
     address_translation_t trans;
     trans.full = address;
 
@@ -46,7 +50,7 @@ uintptr_t guest_memory_translate(uintptr_t address)
 
     if (p2->dest == 0)
     {
-        log_string("allocating guest page\n");
+        log_hex(address, "allocating guest page");
         p2->dest = reinterpret_cast<uintptr_t>(malloc(0x1000, allocation_type_t::guest_memory));
     }
 

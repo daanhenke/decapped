@@ -9,6 +9,13 @@ void decode_rel8(uint8_t* code, arg_t* dest)
     dest->value = *code;
 }
 
+
+void decode_imm8(uint8_t* code, arg_t* dest)
+{
+    dest->type = argument_type_t::imm8;
+    dest->value = *code;
+}
+
 void decode_imm16(uint8_t* code, arg_t* dest)
 {
     auto u16 = reinterpret_cast<uint16_t*>(code);
@@ -70,6 +77,8 @@ void decode_far_ptr(uint8_t* code, arg_t* dest)
 instruction_t decode_instruction(uint8_t* instruction, uintptr_t address)
 {
     instruction_t result;
+    memset(&result, 0, sizeof(instruction_t));
+
     result.address = address;
     result.opcode = opcode_t::unknown;
     result.args[0] = { argument_type_t::none, 0 };
@@ -79,11 +88,28 @@ instruction_t decode_instruction(uint8_t* instruction, uintptr_t address)
     auto opcode = *instruction++;
     switch (opcode)
     {
+    case 0x01:  result.opcode = opcode_t::add; instruction = decode_modrm(instruction, &(result.args[0])); break;
+    case 0x03:  result.opcode = opcode_t::add; instruction = decode_modrm(instruction, &(result.args[0]), true);  break;
+    case 0x11:  result.opcode = opcode_t::adc; instruction = decode_modrm(instruction, &(result.args[0])); break;
     case 0x31:  result.opcode = opcode_t::_xor; instruction = decode_modrm(instruction, &(result.args[0])); break;
+    case 0x83:  result.opcode = opcode_t::adc; instruction = decode_modrm(instruction, &(result.args[0])); decode_imm8(instruction++, &(result.args[1])); break;
     case 0x89:  result.opcode = opcode_t::mov; instruction = decode_modrm(instruction, &(result.args[0]));  break;
+    case 0x8A:  result.opcode = opcode_t::mov; instruction = decode_modrm(instruction, &(result.args[0]), true, argument_type_t::reg8, argument_type_t::reg8); break;
+    case 0x8B:  result.opcode = opcode_t::mov; instruction = decode_modrm(instruction, &(result.args[0]), true);  break;
+    case 0x8C:  result.opcode = opcode_t::mov; instruction = decode_modrm(instruction, &(result.args[0]), false, argument_type_t::sreg16);  break;
     case 0x8D:  result.opcode = opcode_t::lea; instruction = decode_modrm(instruction, &(result.args[0]), true); break;
     case 0x8E:  result.opcode = opcode_t::mov; instruction = decode_modrm(instruction, &(result.args[0]), true, argument_type_t::sreg16);  break;
+    case 0x90:  result.opcode = opcode_t::nop;  break;
+    case 0x98:  result.opcode = opcode_t::cbw;  break;
     case 0xA5:  result.opcode = opcode_t::movs; break;
+    case 0xB0:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 0; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB1:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 1; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB2:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 2; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB3:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 3; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB4:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 4; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB5:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 5; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB6:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 6; decode_imm8(instruction++, &(result.args[1])); break;
+    case 0xB7:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg8; result.args[0].value = 7; decode_imm8(instruction++, &(result.args[1])); break;
     case 0xB8:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 0; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
     case 0xB9:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 1; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
     case 0xBA:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 2; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
@@ -92,10 +118,14 @@ instruction_t decode_instruction(uint8_t* instruction, uintptr_t address)
     case 0xBD:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 5; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
     case 0xBE:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 6; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
     case 0xBF:  result.opcode = opcode_t::mov; result.args[0].type = argument_type_t::reg16; result.args[0].value = 7; decode_imm16(instruction, &(result.args[1])); instruction += 2; break;
+    case 0xC7:  result.opcode = opcode_t::mov; instruction = decode_modrm(instruction, &(result.args[0])); decode_imm16(instruction, &(result.args[2])); instruction += 2;       break;
+    case 0xD3:  result.opcode = opcode_t::shr; instruction = decode_modrm(instruction, &(result.args[0])); result.args[1].type = argument_type_t::reg8; result.args[1].value = 1; break;
     case 0xEA:  result.opcode = opcode_t::jmp; decode_far_ptr(instruction, &(result.args[0])); instruction += 4; break;
     case 0xEB:  result.opcode = opcode_t::jmp; decode_rel8(instruction++, &(result.args[0]));   break;
     case 0xF3:  result.opcode = opcode_t::rep;                                                  break;
+    case 0xF7:  result.opcode = opcode_t::mul; instruction = decode_modrm(instruction, &(result.args[0]), false, argument_type_t::none);  break;
     case 0xFA:  result.opcode = opcode_t::cli;                                                  break;
+    case 0xFB:  result.opcode = opcode_t::sti;                                                  break;
     case 0xFC:  result.opcode = opcode_t::cld;                                                  break;
     default:    log_hex(opcode, "unknown opcode: ");                                            break;
     }
